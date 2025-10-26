@@ -4,7 +4,7 @@ import { use, useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import { v4 as uuid } from "uuid";
 
-import BuilderPage from "@/components/build-page";
+import BuilderPage from "@/components/builder/build-page";
 import { useRouter } from "next/navigation";
 
 export type Item = {
