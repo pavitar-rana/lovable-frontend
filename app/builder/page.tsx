@@ -22,6 +22,7 @@ export default function Builder({ params }: BuilderProps) {
   const { id } = use(params);
   const router = useRouter();
 
+  const [sandBoxId, setSandBoxId] = useState<string>("");
   const [projectUrl, setProjectUrl] = useState<string>("");
   const [userPrompt, setUserPrompt] = useState<string>("");
   const [tree, setTree] = useState<Record<string, Item>>();
@@ -29,34 +30,35 @@ export default function Builder({ params }: BuilderProps) {
   const [files, setFiles] = useState<{ path: string; code: string }[]>([]);
   const [selectedFile, setSelectedFile] = useState<{ fileName: string; code: string } | null>(null);
 
-  useEffect(() => {
-    const startProject = async (id: string) => {
-      const res = await axios.get(`http://localhost:3002/api/start-app?id=${id}`);
+  // useEffect(() => {
+  //   const startProject = async (id: string) => {
+  //     const res = await axios.get(`http://localhost:3002/api/start-app?id=${id}`);
 
-      if (res.data.url) {
-        setProjectUrl(res.data.url);
-      }
-    };
+  //     if (res.data.url) {
+  //       setProjectUrl(res.data.url);
+  //     }
+  //   };
 
-    if (id && id !== "new") {
-      setProjectId(id);
-      startProject(id);
-    } else {
-      const newId = uuid();
-      setProjectId(newId);
-      router.replace(`/builder/${newId}`);
-    }
-  }, [id, router]);
+  //   if (id && id !== "new") {
+  //     setProjectId(id);
+  //     startProject(id);
+  //   } else {
+  //     const newId = uuid();
+  //     setProjectId(newId);
+  //     router.replace(`/builder/${newId}`);
+  //   }
+  // }, [id, router]);
 
   const fetchFiles = useCallback(async () => {
-    if (!projectId) return;
+    if (!sandBoxId) return;
 
     try {
-      const res = await axios.post("http://localhost:3002/api/project-files", {
-        id: projectId,
+      const res = await axios.post("http://localhost:3000/files", {
+        sandboxId: sandBoxId,
       });
 
       const { files: fetchedFiles, tree: fileTree, error } = res.data;
+      console.log("res ", res.data);
 
       if (error) {
         console.warn("API error:", error);
@@ -82,15 +84,16 @@ export default function Builder({ params }: BuilderProps) {
     } catch (err) {
       console.error("Failed to fetch files:", err);
     }
-  }, [projectId]);
+  }, [sandBoxId]);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      fetchFiles();
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, [fetchFiles]);
+    if (sandBoxId) {
+      const interval = setInterval(() => {
+        fetchFiles();
+      }, 3000);
+      return () => clearInterval(interval);
+    }
+  }, [fetchFiles, sandBoxId]);
 
   return (
     <div>
@@ -107,6 +110,8 @@ export default function Builder({ params }: BuilderProps) {
           setSelectedFile,
           setProjectUrl,
           projectUrl,
+          sandBoxId,
+          setSandBoxId,
         }}
       />
     </div>

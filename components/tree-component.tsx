@@ -1,8 +1,6 @@
 import { hotkeysCoreFeature, syncDataLoaderFeature } from "@headless-tree/core";
 import { useTree } from "@headless-tree/react";
 import { Tree, TreeItem, TreeItemLabel } from "@/components/ui/tree";
-import dynamic from "next/dynamic";
-import { useEffect } from "react";
 import { Item } from "@/app/builder/page";
 
 export const TreeComponent = ({
@@ -26,7 +24,7 @@ export const TreeComponent = ({
     features: [syncDataLoaderFeature, hotkeysCoreFeature],
   });
   return (
-    <div>
+    <div className="w-full">
       <Tree
         className="relative before:absolute before:inset-0 before:-ms-1 before:bg-[repeating-linear-gradient(to_right,transparent_0,transparent_calc(var(--tree-indent)-1px),var(--border)_calc(var(--tree-indent)-1px),var(--border)_calc(var(--tree-indent)))]"
         indent={20}
