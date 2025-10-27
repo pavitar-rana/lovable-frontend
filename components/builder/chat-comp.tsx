@@ -19,7 +19,7 @@ const ChatComponent = ({
   return (
     <div className="flex flex-col h-full bg-background">
       {/* Chat Messages Area */}
-      <div className="console">
+      <div className="h-20 overflow-scroll">
         {logs.map((log, i) => (
           <div key={i}>{log}</div>
         ))}

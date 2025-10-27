@@ -49,15 +49,25 @@ const BuilderPage = ({
     });
 
     // Sandbox setup
-    socket.on("sandbox:connected", ({ sandboxId }) => {
+    socket.on("sandbox:connected", ({ sandboxId, url }) => {
       console.log("Sandbox connected:", sandboxId);
       setSandBoxId(sandboxId);
+      setProjectUrl(url);
       setLogs((p) => [...p, `Sandbox ID: ${sandboxId}`]);
     });
 
     // 🛠️ Tool updates
-    socket.on("tool:start", (d) => setLogs((p) => [...p, `Starting ${d.name}`]));
-    socket.on("tool:end", (d) => setLogs((p) => [...p, `Finished ${d.name}`]));
+    socket.on("step:finish", (d) => {
+      console.log("step:finish ", d);
+    });
+    socket.on("tool:start", (d) => {
+      console.log("tool:start ", d.name);
+      setLogs((p) => [...p, `Starting ${d.name}`]);
+    });
+    socket.on("tool:end", (d) => {
+      console.log("tool:end ", d.name);
+      setLogs((p) => [...p, `Finished ${d.name}`]);
+    });
 
     // AI updates
     socket.on("ai:done", (d) => {
