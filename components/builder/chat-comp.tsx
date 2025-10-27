@@ -7,16 +7,23 @@ const ChatComponent = ({
   handleChat,
   messages,
   loading,
+  logs,
 }: {
   setUserPrompt: React.Dispatch<React.SetStateAction<string>>;
   userPrompt: string;
   handleChat: any;
   messages: ModelMessage[];
   loading: boolean;
+  logs: string[];
 }) => {
   return (
     <div className="flex flex-col h-full bg-background">
       {/* Chat Messages Area */}
+      <div className="console">
+        {logs.map((log, i) => (
+          <div key={i}>{log}</div>
+        ))}
+      </div>
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 ? (
           <div className="text-center text-muted-foreground">Start a conversation by typing a message below</div>

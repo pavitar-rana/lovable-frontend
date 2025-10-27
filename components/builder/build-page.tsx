@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import type { ModelMessage } from "ai";
 import { CodePreviewTabs } from "./code-preview-tabs";
 import { ChatComponent } from "./chat-comp";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "../ui/resizable";
+import { io, Socket } from "socket.io-client";
 
 const BuilderPage = ({
   userPrompt,
@@ -36,44 +37,74 @@ const BuilderPage = ({
 }) => {
   const [messages, setMessages] = useState<ModelMessage[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
+  const [logs, setLogs] = useState<string[]>([]);
+  const socketRef = useRef<Socket | null>(null);
+
+  useEffect(() => {
+    const socket = io("http://localhost:3000");
+    socketRef.current = socket;
+
+    socket.on("connect", () => {
+      console.log("Connected to server:", socket.id);
+    });
+
+    // Sandbox setup
+    socket.on("sandbox:connected", ({ sandboxId }) => {
+      console.log("Sandbox connected:", sandboxId);
+      setSandBoxId(sandboxId);
+      setLogs((p) => [...p, `Sandbox ID: ${sandboxId}`]);
+    });
+
+    // 🛠️ Tool updates
+    socket.on("tool:start", (d) => setLogs((p) => [...p, `Starting ${d.name}`]));
+    socket.on("tool:end", (d) => setLogs((p) => [...p, `Finished ${d.name}`]));
+
+    // AI updates
+    socket.on("ai:done", (d) => {
+      console.log("AI done:", d);
+      setTimeout(() => {
+        setProjectUrl(d.url);
+        setSandBoxId(d.sandboxId);
+        setMessages(d.messages);
+        setLoading(false);
+      }, 1000);
+      setLogs((p) => [...p, `URL: ${d.url}`]);
+    });
+
+    socket.on("error", (err) => console.error("Socket error:", err));
+
+    // Clean up once
+    return () => {
+      socket.disconnect();
+    };
+  }, [setSandBoxId, setProjectUrl]);
 
   const handleChat = async () => {
     if (!userPrompt.trim()) return alert("Prompt needed");
-
     setLoading(true);
 
-    const newMessage: ModelMessage[] = [
-      ...messages,
-      {
-        role: "user",
-        content: userPrompt,
-      },
-    ];
-
+    const newMessage: ModelMessage[] = [...messages, { role: "user", content: userPrompt }];
     setMessages(newMessage);
 
-    console.log("information : ", {
+    const socket = socketRef.current;
+    if (!socket) {
+      console.error("Socket not connected");
+      return;
+    }
+
+    console.log("Emitting startChat:", {
       sandBoxId,
       userPrompt,
-      messages,
-    });
-
-    const res = await axios.post("http://localhost:3000/chat", {
-      prompt: userPrompt,
-      sandboxId: sandBoxId,
       messages: newMessage,
+      socketId: socket.id,
     });
 
-    console.log("output : ", res.data);
-
-    if (res.data.url) {
-      setTimeout(() => {
-        setProjectUrl(res.data.url);
-        setSandBoxId(res.data.sandboxId);
-        setMessages(res.data.messages);
-        setLoading(false);
-      }, 2000);
-    }
+    socket.emit("startChat", {
+      prompt: userPrompt,
+      messages: newMessage,
+      sandboxId: sandBoxId,
+      userId: socket.id, // Use socket.id
+    });
   };
 
   return (
@@ -87,6 +118,7 @@ const BuilderPage = ({
               handleChat,
               messages,
               loading,
+              logs,
             }}
           />
         </ResizablePanel>
