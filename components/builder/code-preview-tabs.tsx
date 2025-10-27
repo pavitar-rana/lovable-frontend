@@ -37,7 +37,7 @@ const CodePreviewTabs = ({
                 }}
               />
             ) : (
-              <div>No tree</div>
+              <div className="flex justify-center items-center h-full">No Files</div>
             )}
           </ResizablePanel>
           <ResizableHandle />

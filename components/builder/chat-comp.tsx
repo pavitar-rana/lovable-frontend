@@ -6,11 +6,13 @@ const ChatComponent = ({
   setUserPrompt,
   handleChat,
   messages,
+  loading,
 }: {
   setUserPrompt: React.Dispatch<React.SetStateAction<string>>;
   userPrompt: string;
   handleChat: any;
   messages: ModelMessage[];
+  loading: boolean;
 }) => {
   return (
     <div className="flex flex-col h-full bg-background">
@@ -203,6 +205,7 @@ const ChatComponent = ({
             userPrompt,
             setUserPrompt,
             handleChat,
+            loading,
           }}
         />
       </div>

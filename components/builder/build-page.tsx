@@ -35,9 +35,22 @@ const BuilderPage = ({
   selectedFile: any;
 }) => {
   const [messages, setMessages] = useState<ModelMessage[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
 
   const handleChat = async () => {
     if (!userPrompt.trim()) return alert("Prompt needed");
+
+    setLoading(true);
+
+    const newMessage: ModelMessage[] = [
+      ...messages,
+      {
+        role: "user",
+        content: userPrompt,
+      },
+    ];
+
+    setMessages(newMessage);
 
     console.log("information : ", {
       sandBoxId,
@@ -48,7 +61,7 @@ const BuilderPage = ({
     const res = await axios.post("http://localhost:3000/chat", {
       prompt: userPrompt,
       sandboxId: sandBoxId,
-      messages: messages,
+      messages: newMessage,
     });
 
     console.log("output : ", res.data);
@@ -58,30 +71,13 @@ const BuilderPage = ({
         setProjectUrl(res.data.url);
         setSandBoxId(res.data.sandboxId);
         setMessages(res.data.messages);
-      }, 3000);
+        setLoading(false);
+      }, 2000);
     }
   };
 
   return (
     <div className="flex h-screen w-screen bg-background text-foreground ">
-      {/*<div className="flex items-center gap-2 p-2 border-b border-gray-700 bg-[#2d2d2d]">
-        <input
-          className="flex-1 px-2 py-1 rounded bg-background text-foreground outline-none"
-          placeholder="Enter prompt..."
-          value={userPrompt}
-          onChange={(e) => setUserPrompt(e.target.value)}
-        />
-        <button onClick={handleChat} className="px-4 py-1 bg-blue-600 hover:bg-blue-700 rounded text-white font-medium">
-          Submit
-        </button>
-        <button
-          onClick={fetchFiles}
-          className="px-4 py-1 bg-green-600 hover:bg-green-700 rounded text-white font-medium"
-        >
-          Refresh Files
-        </button>
-      </div>*/}
-
       <ResizablePanelGroup direction="horizontal" className="max-w-full rounded-lg border ">
         <ResizablePanel defaultSize={25} className="p-3">
           <ChatComponent
@@ -90,6 +86,7 @@ const BuilderPage = ({
               setUserPrompt,
               handleChat,
               messages,
+              loading,
             }}
           />
         </ResizablePanel>
