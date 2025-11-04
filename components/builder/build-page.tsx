@@ -5,6 +5,8 @@ import { CodePreviewTabs } from "./code-preview-tabs";
 import { ChatComponent } from "./chat-comp";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "../ui/resizable";
 import { io, Socket } from "socket.io-client";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 const BuilderPage = ({
   userPrompt,
@@ -20,6 +22,9 @@ const BuilderPage = ({
   sandBoxId,
   fetchFiles,
   setSandBoxId,
+  setMessages,
+  messages,
+  query,
 }: {
   userPrompt: string;
   setUserPrompt: React.Dispatch<React.SetStateAction<string>>;
@@ -34,11 +39,15 @@ const BuilderPage = ({
   projectUrl: string;
   files: { path: string; code: string }[];
   selectedFile: any;
+  messages: ModelMessage[];
+  setMessages: any;
+  query: string | null;
 }) => {
-  const [messages, setMessages] = useState<ModelMessage[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-  const [logs, setLogs] = useState<string[]>([]);
+  const [logs, setLogs] = useState<{ name: string; content: string }[]>([]);
   const socketRef = useRef<Socket | null>(null);
+  const { data: session } = useSession();
+  const router = useRouter();
 
   useEffect(() => {
     const socket = io("http://localhost:3000");
@@ -53,20 +62,33 @@ const BuilderPage = ({
       console.log("Sandbox connected:", sandboxId);
       setSandBoxId(sandboxId);
       setProjectUrl(url);
-      setLogs((p) => [...p, `Sandbox ID: ${sandboxId}`]);
+      setLogs((p) => [
+        ...p,
+        {
+          name: "Sandbox Connected",
+          content: sandboxId,
+        },
+      ]);
     });
 
-    // 🛠️ Tool updates
-    socket.on("step:finish", (d) => {
-      console.log("step:finish ", d);
+    // update file
+    socket.on("tool:updateFile", (d) => {
+      setLogs((p) => [
+        ...p,
+        {
+          name: "Updating",
+          content: d.location.startsWith("/home/user") ? d.location.split("/home/user/")[1] : d.location,
+        },
+      ]);
     });
-    socket.on("tool:start", (d) => {
-      console.log("tool:start ", d.name);
-      setLogs((p) => [...p, `Starting ${d.name}`]);
-    });
-    socket.on("tool:end", (d) => {
-      console.log("tool:end ", d.name);
-      setLogs((p) => [...p, `Finished ${d.name}`]);
+    socket.on("tool:runCommand", (d) => {
+      setLogs((p) => [
+        ...p,
+        {
+          name: "Running",
+          content: d.command,
+        },
+      ]);
     });
 
     // AI updates
@@ -77,8 +99,12 @@ const BuilderPage = ({
         setSandBoxId(d.sandboxId);
         setMessages(d.messages);
         setLoading(false);
+        // router.replace(`/builder/${d.projectId}`);
+        if (typeof window !== "undefined") {
+          window.history.replaceState({}, "", `/builder/${d.projectId}`);
+        }
       }, 1000);
-      setLogs((p) => [...p, `URL: ${d.url}`]);
+      // setLogs((p) => [...p, `URL: ${d.url}`]);
     });
 
     socket.on("error", (err) => console.error("Socket error:", err));
@@ -87,7 +113,32 @@ const BuilderPage = ({
     return () => {
       socket.disconnect();
     };
-  }, [setSandBoxId, setProjectUrl]);
+  }, [setSandBoxId, setProjectUrl, router, setMessages]);
+
+  useEffect(() => {
+    if (query && messages.length === 0) {
+      const newMessage: ModelMessage[] = [...messages, { role: "user", content: query || "" }];
+      setMessages(newMessage);
+
+      const socket = socketRef.current;
+      if (!socket) {
+        console.error("Socket not connected");
+        return;
+      }
+
+      if (session?.user?.id) {
+        console.log("starting chat for query projectId: ", projectId);
+        console.log("starting chat for query  : ", query);
+        socket.emit("startChat", {
+          prompt: query,
+          messages: newMessage,
+          sandboxId: sandBoxId,
+          userId: session.user.id,
+          projectId,
+        });
+      }
+    }
+  }, [query, messages, session, projectId, sandBoxId, setMessages]);
 
   const handleChat = async () => {
     if (!userPrompt.trim()) return alert("Prompt needed");
@@ -108,13 +159,16 @@ const BuilderPage = ({
       messages: newMessage,
       socketId: socket.id,
     });
-
-    socket.emit("startChat", {
-      prompt: userPrompt,
-      messages: newMessage,
-      sandboxId: sandBoxId,
-      userId: socket.id, // Use socket.id
-    });
+    if (session?.user?.id) {
+      console.log("starting chat for : ", projectId);
+      socket.emit("startChat", {
+        prompt: userPrompt,
+        messages: newMessage,
+        sandboxId: sandBoxId,
+        userId: session.user.id,
+        projectId,
+      });
+    }
   };
 
   return (

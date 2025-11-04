@@ -10,7 +10,7 @@ interface CodeViewerProps {
   language?: string;
 }
 
-export function CodeViewer({ fileName, code, language = "typescript" }: CodeViewerProps) {
+export function CodeViewer({ fileName, code, language = "javascript" }: CodeViewerProps) {
   return (
     <div className="flex flex-col h-full bg-[#1e1e1e] border border-gray-700 rounded-lg overflow-hidden">
       {/* Header */}

@@ -28,6 +28,7 @@ const PromptInputComp = ({
           placeholder="Type your message..."
         />
         <Button
+          type="submit"
           onClick={() => {
             setUserPrompt("");
             handleChat();
