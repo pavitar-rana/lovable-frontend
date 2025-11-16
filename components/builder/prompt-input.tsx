@@ -2,7 +2,6 @@ import { LucideSend } from "lucide-react";
 import { Button } from "../ui/button";
 import { Card, CardContent } from "../ui/card";
 
-import { Textarea } from "../ui/textarea";
 import { Spinner } from "../ui/spinner";
 
 const PromptInputComp = ({
@@ -26,6 +25,13 @@ const PromptInputComp = ({
           }}
           className="bg-transparent px-3 py-2 w-full resize-none focus:outline-none"
           placeholder="Type your message..."
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey && userPrompt.trim() && !loading) {
+              e.preventDefault();
+              setUserPrompt("");
+              handleChat();
+            }
+          }}
         />
         <Button
           type="submit"

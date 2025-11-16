@@ -2,6 +2,7 @@ import { hotkeysCoreFeature, syncDataLoaderFeature } from "@headless-tree/core";
 import { useTree } from "@headless-tree/react";
 import { Tree, TreeItem, TreeItemLabel } from "@/components/ui/tree";
 import { Item } from "@/app/builder/page";
+import { toast } from "sonner";
 
 export const TreeComponent = ({
   tree,
@@ -39,7 +40,7 @@ export const TreeComponent = ({
                     const x = files.find((f) => f.path == item.getId());
 
                     if (!x) {
-                      return alert("File not found");
+                      return toast.error("File not found");
                     }
                     const file = {
                       fileName: x.path,

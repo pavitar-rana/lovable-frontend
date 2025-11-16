@@ -9,6 +9,7 @@ import BuilderPage from "@/components/builder/build-page";
 import { useRouter, useSearchParams } from "next/navigation";
 import axios from "axios";
 import { ModelMessage } from "ai";
+import { toast } from "sonner";
 
 export type Item = {
   name: string;
@@ -40,25 +41,37 @@ export default function Builder({ params }: BuilderProps) {
 
   useEffect(() => {
     const startProject = async (id: string) => {
-      const res = await axios.get(`http://localhost:3000/startProject/${id}`, {
-        headers: {
-          userId: session?.user?.id,
+      toast.promise<{ projectId: string }>(
+        async () => {
+          const res = await axios.get(`http://localhost:3000/startProject/${id}`, {
+            headers: {
+              userId: session?.user?.id,
+            },
+          });
+          await new Promise((resolve) => {
+            setTimeout(() => {
+              setProjectUrl(res.data.url);
+              setSandBoxId(res.data.sandboxId);
+              setMessages(res.data.messages);
+              resolve(undefined);
+            }, 2000);
+          });
+          return { projectId: res.data.projectId };
         },
-      });
-
-      setTimeout(() => {
-        setProjectUrl(res.data.url);
-        setSandBoxId(res.data.sandboxId);
-        setMessages(res.data.messages);
-      }, 2000);
+        {
+          loading: "Loading...",
+          success: (data) => `${data.projectId} has been started`,
+          error: "Error",
+        },
+      );
     };
-    console.log("from use effect sandBoxId : ", sandBoxId);
-    console.log("from use effect id  : ", id);
-    console.log("from use effect messages : ", messages);
+    // console.log("from use effect sandBoxId : ", sandBoxId);
+    // console.log("from use effect id  : ", id);
+    // console.log("from use effect messages : ", messages);
 
     if (!sandBoxId && session?.user?.id && messages.length === 0 && starterRef.current == false) {
       if (id && id !== "new") {
-        console.log("running start project with sandBoxId : ", sandBoxId);
+        // console.log("running start project with sandBoxId : ", sandBoxId);
         setProjectId(id);
         startProject(id);
         starterRef.current = true;
@@ -80,7 +93,7 @@ export default function Builder({ params }: BuilderProps) {
       });
 
       const { files: fetchedFiles, tree: fileTree, error } = res.data;
-      console.log("res ", res.data);
+      // console.log("res ", res.data);
 
       if (error) {
         console.warn("API error:", error);
@@ -104,7 +117,8 @@ export default function Builder({ params }: BuilderProps) {
         );
       }
     } catch (err) {
-      console.error("Failed to fetch files:", err);
+      // console.error("Failed to fetch files:", err);
+      toast.error("Failed to fetch files, Retrying in 5 seconds");
     }
   }, [sandBoxId, projectId, session]);
 

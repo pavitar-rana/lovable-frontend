@@ -7,6 +7,7 @@ import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "../ui/resi
 import { io, Socket } from "socket.io-client";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 const BuilderPage = ({
   userPrompt,
@@ -129,6 +130,7 @@ const BuilderPage = ({
       if (session?.user?.id) {
         console.log("starting chat for query projectId: ", projectId);
         console.log("starting chat for query  : ", query);
+        toast.info("Starting Chat");
         socket.emit("startChat", {
           prompt: query,
           messages: newMessage,
@@ -141,7 +143,7 @@ const BuilderPage = ({
   }, [query, messages, session, projectId, sandBoxId, setMessages]);
 
   const handleChat = async () => {
-    if (!userPrompt.trim()) return alert("Prompt needed");
+    if (!userPrompt.trim()) return toast.warning("Prompt needed");
     setLoading(true);
 
     const newMessage: ModelMessage[] = [...messages, { role: "user", content: userPrompt }];
@@ -161,6 +163,7 @@ const BuilderPage = ({
     });
     if (session?.user?.id) {
       console.log("starting chat for : ", projectId);
+      toast.info("Starting Chat");
       socket.emit("startChat", {
         prompt: userPrompt,
         messages: newMessage,

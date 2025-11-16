@@ -29,6 +29,9 @@ export async function GET(req: NextRequest, res: NextResponse) {
     where: {
       userId: user.id,
     },
+    orderBy: {
+      createdAt: "desc",
+    },
   });
 
   if (projects.length === 0) {

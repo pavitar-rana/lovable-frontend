@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Send, Sparkles, FolderOpen } from "lucide-react";
 import type { Project } from "@/lib/generated/prisma/browser";
+import { toast } from "sonner";
 
 export default function Page() {
   const router = useRouter();
@@ -24,9 +25,10 @@ export default function Page() {
             userId: session?.user?.id,
           },
         });
+        toast.success("Fetched all projects");
         setProjects(res.data.projects || []);
       } catch (error) {
-        console.error("Failed to fetch projects:", error);
+        toast.error("Failed to get projects");
       }
     };
 
@@ -85,6 +87,12 @@ export default function Page() {
                 placeholder="Describe your project idea... (e.g., 'Create a task management app with drag and drop')"
                 className="w-full px-6 py-5 text-lg resize-none focus:outline-none min-h-[120px] bg-card text-card-foreground placeholder:text-muted-foreground"
                 rows={3}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey && prompt.trim() && !isLoading) {
+                    e.preventDefault();
+                    handleCreate();
+                  }
+                }}
               />
               <div className="flex items-center justify-between px-6 py-4 bg-muted border-t border-border">
                 <p className="text-sm text-muted-foreground font-mono">{prompt.length} characters</p>

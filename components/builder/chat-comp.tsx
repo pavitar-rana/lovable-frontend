@@ -228,25 +228,38 @@ const ChatComponent = ({
 
       {/* Prompt Input at Bottom */}
       <div className="p-4 border-t">
-        <div className="mb-0.5">
-          {logs.map((log, i) => (
-            <div key={i} className="rounded-lg p-0.5 text-sm">
-              <div className="flex items-center font-medium mb-0.5">
-                <div>{log.name} : </div>
-                {log.content && <div className="">{log.content}</div>}
-              </div>
-            </div>
-          ))}
-        </div>
-        <PromptInputComp
-          {...{
-            userPrompt,
-            setUserPrompt,
-            handleChat,
-            loading,
+        {/* Logs area with autoscroll */}
+        <div
+          className="mb-0.5 max-h-40 overflow-y-auto bg-black rounded-lg border border-gray-800 p-2 font-mono text-xs text-green-400"
+          style={{
+            boxShadow: "inset 0 1px 4px rgba(0,0,0,0.25)",
           }}
-        />
+          ref={(el) => {
+            if (el) {
+              el.scrollTop = el.scrollHeight;
+            }
+          }}
+        >
+          {logs.length === 0 ? (
+            <div className="text-gray-500 text-center">No logs yet.</div>
+          ) : (
+            logs.map((log, i) => (
+              <div key={i} className="whitespace-pre-wrap">
+                <span className="text-green-500">$</span> <span className="text-green-300">{log.name}</span>
+                {log.content && <span className="text-green-400">: {log.content}</span>}
+              </div>
+            ))
+          )}
+        </div>
       </div>
+      <PromptInputComp
+        {...{
+          userPrompt,
+          setUserPrompt,
+          handleChat,
+          loading,
+        }}
+      />
     </div>
   );
 };
