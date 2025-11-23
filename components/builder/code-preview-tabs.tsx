@@ -58,7 +58,7 @@ const CodePreviewTabs = ({
                   minimap: { enabled: false },
                   fontSize: 14,
                   automaticLayout: true,
-                  scrollBeyondLastLine: false,
+                  scrollBeyondLastLine: true,
                 }}
               />
             ) : (

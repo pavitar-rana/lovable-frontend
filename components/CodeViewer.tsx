@@ -8,11 +8,12 @@ interface CodeViewerProps {
   fileName: string;
   code: string;
   language?: string;
+  height?: string;
 }
 
-export function CodeViewer({ fileName, code, language = "javascript" }: CodeViewerProps) {
+export function CodeViewer({ fileName, code, language = "javascript", height = "600px" }: CodeViewerProps) {
   return (
-    <div className="flex flex-col h-full bg-[#1e1e1e] border border-gray-700 rounded-lg overflow-hidden">
+    <div className="flex flex-col bg-[#1e1e1e] border border-gray-700 rounded-lg" style={{ height }}>
       {/* Header */}
       <div className="px-3 py-2 bg-[#2d2d2d] text-gray-300 text-sm flex justify-between items-center font-mono">
         <span>{fileName}</span>
@@ -31,6 +32,12 @@ export function CodeViewer({ fileName, code, language = "javascript" }: CodeView
           scrollBeyondLastLine: false,
           readOnly: true,
           domReadOnly: true,
+          scrollbar: {
+            vertical: "auto",
+            horizontal: "auto",
+            verticalScrollbarSize: 10,
+            horizontalScrollbarSize: 10,
+          },
         }}
       />
     </div>

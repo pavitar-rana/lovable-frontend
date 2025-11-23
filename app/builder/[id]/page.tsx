@@ -132,32 +132,36 @@ export default function Builder({ params }: BuilderProps) {
   }, [fetchFiles, sandBoxId]);
 
   return (
-    <div>
-      <div>{!session?.user?.email ? <div>Please login</div> : <div>you : {session?.user?.email}</div>} </div>
-      {projectId ? (
-        <BuilderPage
-          {...{
-            userPrompt,
-            setUserPrompt,
-            files,
-            tree,
-            fetchFiles,
-            selectedFile,
-            projectId,
-            setProjectId,
-            setSelectedFile,
-            setProjectUrl,
-            projectUrl,
-            sandBoxId,
-            setSandBoxId,
-            messages,
-            setMessages,
-            query,
-          }}
-        />
-      ) : (
-        <div>Loading...</div>
-      )}
+    <div className="flex flex-col h-screen w-screen">
+      <div className="p-1">
+        {!session?.user?.email ? <div>Please login</div> : <div>you : {session?.user?.email}</div>}{" "}
+      </div>
+      <div className="w-full h-full">
+        {projectId ? (
+          <BuilderPage
+            {...{
+              userPrompt,
+              setUserPrompt,
+              files,
+              tree,
+              fetchFiles,
+              selectedFile,
+              projectId,
+              setProjectId,
+              setSelectedFile,
+              setProjectUrl,
+              projectUrl,
+              sandBoxId,
+              setSandBoxId,
+              messages,
+              setMessages,
+              query,
+            }}
+          />
+        ) : (
+          <div>Loading...</div>
+        )}
+      </div>
     </div>
   );
 }

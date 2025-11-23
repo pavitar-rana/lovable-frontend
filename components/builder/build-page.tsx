@@ -175,7 +175,7 @@ const BuilderPage = ({
   };
 
   return (
-    <div className="flex h-screen w-screen bg-background text-foreground ">
+    <div className="flex h-full w-full bg-background text-foreground ">
       <ResizablePanelGroup direction="horizontal" className="max-w-full rounded-lg border ">
         <ResizablePanel defaultSize={25} className="p-3">
           <ChatComponent

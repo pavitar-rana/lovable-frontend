@@ -1,6 +1,64 @@
 import { Divide } from "lucide-react";
 import { PromptInputComp } from "./prompt-input";
 import type { ModelMessage } from "ai";
+import { useEffect, useRef } from "react";
+
+// Simple Markdown renderer component
+const MarkdownText = ({ text }: { text: string }) => {
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (contentRef.current) {
+      // Simple markdown parsing
+      let html = text
+        // Escape HTML to prevent XSS
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        // Headers
+        .replace(/^### (.*$)/gim, "<h3 class='text-lg font-semibold mt-3 mb-2'>$1</h3>")
+        .replace(/^## (.*$)/gim, "<h2 class='text-xl font-semibold mt-4 mb-2'>$1</h2>")
+        .replace(/^# (.*$)/gim, "<h1 class='text-2xl font-bold mt-4 mb-3'>$1</h1>")
+        // Bold
+        .replace(/\*\*(.+?)\*\*/g, "<strong class='font-bold'>$1</strong>")
+        .replace(/__(.+?)__/g, "<strong class='font-bold'>$1</strong>")
+        // Italic
+        .replace(/\*(.+?)\*/g, "<em class='italic'>$1</em>")
+        .replace(/_(.+?)_/g, "<em class='italic'>$1</em>")
+        // Code blocks
+        .replace(
+          /```(\w+)?\n([\s\S]*?)```/g,
+          "<pre class='bg-slate-800 text-slate-100 rounded p-3 my-2 overflow-x-auto'><code>$2</code></pre>",
+        )
+        // Inline code
+        .replace(
+          /`(.+?)`/g,
+          "<code class='bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-sm font-mono'>$1</code>",
+        )
+        // Links
+        .replace(
+          /\[([^\]]+)\]\(([^)]+)\)/g,
+          "<a href='$2' class='text-blue-500 hover:text-blue-600 underline' target='_blank' rel='noopener noreferrer'>$1</a>",
+        )
+        // Line breaks
+        .replace(/\n\n/g, "</p><p class='mb-2'>")
+        .replace(/\n/g, "<br/>")
+        // Lists
+        .replace(/^\* (.+)$/gim, "<li class='ml-4'>• $1</li>")
+        .replace(/^- (.+)$/gim, "<li class='ml-4'>• $1</li>")
+        .replace(/^\d+\. (.+)$/gim, "<li class='ml-4 list-decimal'>$1</li>");
+
+      // Wrap in paragraph if not already wrapped
+      if (!html.startsWith("<")) {
+        html = `<p class='mb-2'>${html}</p>`;
+      }
+
+      contentRef.current.innerHTML = html;
+    }
+  }, [text]);
+
+  return <div ref={contentRef} className="markdown-content" />;
+};
 
 const ChatComponent = ({
   userPrompt,
@@ -33,12 +91,9 @@ const ChatComponent = ({
                 }`}
               >
                 <div className="text-sm font-medium mb-1">{message.role === "user" ? "You" : "Assistant"}</div>
-
                 <div className="whitespace-pre-wrap">
                   {(() => {
-                    // Handle string content
                     if (typeof message.content === "string") {
-                      // Try to parse as JSON array
                       try {
                         const parsed = JSON.parse(message.content);
                         if (Array.isArray(parsed)) {
@@ -81,9 +136,9 @@ const ChatComponent = ({
                               {groupedActions.map((item, itemIndex) => (
                                 <div key={itemIndex}>
                                   {typeof item === "string" ? (
-                                    <div>{item}</div>
+                                    <MarkdownText text={item} />
                                   ) : item.type === "text" ? (
-                                    <div>{item.text}</div>
+                                    <MarkdownText text={item.text} />
                                   ) : item.type === "tool-action" ? (
                                     <div className="bg-gray-300 border border-slate-200 rounded-lg p-3 text-sm">
                                       {item.toolCall.toolName === "updateFile" ? (
@@ -111,7 +166,7 @@ const ChatComponent = ({
                                   ) : item.type === "tool-result" ? (
                                     <div className="bg-green-500 border border-green-200 rounded-lg p-3 text-sm">
                                       <div className="flex items-center gap-2 font-medium text-green-800">
-                                        ✅ {item.output || "Completed"}
+                                        {item.output || "Completed"}
                                       </div>
                                     </div>
                                   ) : (
@@ -122,7 +177,7 @@ const ChatComponent = ({
                                     //     }
                                     //     return (
                                     //       <div className="bg-red-100 border border-red-300 rounded-lg p-3 text-sm text-red-700">
-                                    //         <div className="flex items-center gap-2 font-medium">❌ Tool Error</div>
+                                    //         <div className="flex items-center gap-2 font-medium"> Tool Error</div>
                                     //         <div>{item.error || "An error occurred while executing the tool."}</div>
                                     //       </div>
                                     //     );
@@ -136,11 +191,11 @@ const ChatComponent = ({
                               ))}
                             </div>
                           );
+                        } else {
+                          return <MarkdownText text={message.content} />;
                         }
-                      } catch (e) {
-                        // Not valid JSON, render as regular string
-                      }
-                      return message.content;
+                      } catch (e) {}
+                      return <MarkdownText text={message.content} />;
                     }
 
                     // Handle array content
@@ -182,9 +237,9 @@ const ChatComponent = ({
                           {groupedActions.map((item, itemIndex) => (
                             <div key={itemIndex}>
                               {typeof item === "string" ? (
-                                <div>{item}</div>
+                                <MarkdownText text={item} />
                               ) : item.type === "text" ? (
-                                <div>{item.text}</div>
+                                <MarkdownText text={item.text} />
                               ) : item.type === "tool-action" ? (
                                 <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 text-sm">
                                   <div className="flex items-center gap-2 font-medium text-slate-800 mb-2">
@@ -195,14 +250,14 @@ const ChatComponent = ({
                                   )}
                                   {item.toolResult && (
                                     <div className="flex items-center gap-2 text-green-700 bg-green-50 rounded px-2 py-1">
-                                      ✅ {item.toolResult.output || "Completed"}
+                                      {item.toolResult.output || "Completed"}
                                     </div>
                                   )}
                                 </div>
                               ) : item.type === "tool-result" ? (
                                 <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-sm">
                                   <div className="flex items-center gap-2 font-medium text-green-800">
-                                    ✅ {item.output || "Completed"}
+                                    {item.output || "Completed"}
                                   </div>
                                 </div>
                               ) : (
